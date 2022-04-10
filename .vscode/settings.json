@@ -1,0 +1,5 @@
+{
+    "nuxt.isNuxtApp": false,
+    "editor.formatOnSave": true,
+    "element-helper.indent-size": 2
+}
