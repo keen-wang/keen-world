@@ -1,0 +1,1 @@
+import{_,c as a,b as s,e as o,f as n,F as c,g as e,h as r,a as d}from"./entry-c549d7b1.mjs";const l={},i=s("h1",null,"Keen World!",-1),u=e("home"),m=e(" | "),f=e("music player");function h(x,p){const t=r;return d(),a(c,null,[i,s("div",null,[o(t,{to:"/"},{default:n(()=>[u]),_:1}),m,o(t,{to:"/music"},{default:n(()=>[f]),_:1})])],64)}var k=_(l,[["render",h]]);export{k as default};

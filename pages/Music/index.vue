@@ -1,8 +1,8 @@
 <template>
   <div class="music-wrapper">
-    <ClientOnly>
+    <!-- <ClientOnly> -->
       <MusicPlayer id="music-player"></MusicPlayer>
-    </ClientOnly>
+    <!-- </ClientOnly> -->
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 {
   "node_modules/nuxt3/dist/app/entry.mjs": {
-    "file": "entry-5583223b.mjs",
+    "file": "entry-c549d7b1.mjs",
     "src": "node_modules/nuxt3/dist/app/entry.mjs",
     "isEntry": true,
     "dynamicImports": [
@@ -8,14 +8,14 @@
       "pages/index.vue"
     ],
     "css": [
-      "entry.24c2a607.css"
+      "entry.2f4bda85.css"
     ],
     "assets": [
       "问风-Keen.d8c743b2.mp3"
     ]
   },
   "pages/Music/index.vue": {
-    "file": "index-50f5fa42.mjs",
+    "file": "index-35e55078.mjs",
     "src": "pages/Music/index.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -23,7 +23,7 @@
     ]
   },
   "pages/index.vue": {
-    "file": "index-0ca02e90.mjs",
+    "file": "index-cee87651.mjs",
     "src": "pages/index.vue",
     "isDynamicEntry": true,
     "imports": [
