@@ -1,4 +1,4 @@
-import{m,_ as r,w as c,o as A,u as p,r as y,a as _,c as l,b as E,n as g,t as D,d as f,e as B,f as v,g as h}from"./entry-c0a34551.mjs";const C=[{src:m,name:"Keen \xB7 \u95EE\u98CE",poster:"http://p1.music.126.net/M1gk3yEHg5TnPlj1-w4Mzw==/109951166466504110.jpg?param=177y177",lyric:`
+import{m,_ as r,w as c,o as A,u as p,r as y,a as _,c as l,b as E,n as g,t as D,d as f,e as B,f as v,g as h}from"./entry-5583223b.mjs";const C=[{src:m,name:"Keen \xB7 \u95EE\u98CE",poster:"http://p1.music.126.net/M1gk3yEHg5TnPlj1-w4Mzw==/109951166466504110.jpg?param=177y177",lyric:`
 [ti:\u95EE\u98CE]
 [ar:GAI\u5468\u5EF6,\u5409\u514B\u96BD\u9038]
 [al:\u5929\u8D50\u7684\u58F0\u97F3\u7B2C\u4E09\u5B63 \u7B2C1\u671F]

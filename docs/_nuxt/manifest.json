@@ -1,6 +1,6 @@
 {
   "node_modules/nuxt3/dist/app/entry.mjs": {
-    "file": "entry-c0a34551.mjs",
+    "file": "entry-5583223b.mjs",
     "src": "node_modules/nuxt3/dist/app/entry.mjs",
     "isEntry": true,
     "dynamicImports": [
@@ -15,7 +15,7 @@
     ]
   },
   "pages/Music/index.vue": {
-    "file": "index-e06e21ac.mjs",
+    "file": "index-50f5fa42.mjs",
     "src": "pages/Music/index.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -23,7 +23,7 @@
     ]
   },
   "pages/index.vue": {
-    "file": "index-8afeef3b.mjs",
+    "file": "index-0ca02e90.mjs",
     "src": "pages/index.vue",
     "isDynamicEntry": true,
     "imports": [
