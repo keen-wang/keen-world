@@ -1,19 +1,10 @@
 <template>
   <div>
-    <NuxtLink to="/page2">{{ aa }}</NuxtLink>
-    <Tutorial />
+    <h1>Keen World!</h1>
+    <div>
+      <NuxtLink to="/">home</NuxtLink>
+      |
+      <NuxtLink to="/music">music player</NuxtLink>
+    </div>
   </div>
 </template>
-
-<script lang="ts">
-import Vue from "vue";
-
-export default Vue.extend({
-   name: "IndexPage",
-  data() {
-    return {
-      aa: "啊啊啊啊啊",
-    };
-  },
-});
-</script>
