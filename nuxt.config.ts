@@ -18,9 +18,9 @@ const config: NuxtConfig = {
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
-  // router: {
-  //   base: '/keen-world/'
-  // },
+  router: {
+    base: '/keen-world/'
+  },
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
     'element-ui/lib/theme-chalk/index.css'
