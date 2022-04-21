@@ -90,7 +90,7 @@ export default Vue.extend({
       player.crossOrigin = "anonymous";
       // let nullText = 0;
       // player.on("lyricUpdate", (res: any) => {
-      //   console.log(res);
+      //   console.log("lyricUpdate", res);
       //   if (res.lyric === "\n") {
       //     nullText++;
       //   }
@@ -110,6 +110,7 @@ export default Vue.extend({
         if (!lyricBox) {
           throw Error("lyric box not found!");
         }
+        player.off("lyricUpdate", player.__lyric__.__updateHandle__);
         while (lyricBox.firstChild) {
           lyricBox?.removeChild(lyricBox.firstChild);
         }
