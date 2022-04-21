@@ -110,6 +110,9 @@ const config: NuxtConfig = {
       });
     }
   },
+  generate: {
+    dir: "docs"
+  }
   // typescript: {
   //   typeCheck: {
   //     eslint: {

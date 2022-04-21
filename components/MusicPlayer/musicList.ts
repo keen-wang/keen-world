@@ -6,13 +6,25 @@ import mp3Wenfeng from '~/assets/music/wenfeng.mp3'
 // @ts-ignore
 import xiangjianni from '~/assets/music/xiangjianni.mp3'
 // @ts-ignore
-import lrcWenfeng from '~/assets/music/wenfeng.ts'
+import hxazgsj from '~/assets/music/hxazgsj.mp3'
+import lrcWenfeng from '~/assets/music/wenfeng'
+import lrcXjn from '~/assets/music/xiangjianni'
+import lrcHxazgsj from '~/assets/music/hxazgsj'
 const musicList = [
+  {
+    src: hxazgsj,
+    poster:
+      "https://y.qq.com/music/photo_new/T002R300x300M000000QS9AZ18Dbnb_1.jpg?max_age=2592000",
+    lyric: lrcHxazgsj,
+    songName: "好想爱这个世界啊",
+    singer: "Keen",
+    album: "王牌对王牌第五季 第12期"
+  },
   {
     src: xiangjianni,
     poster:
-      "//sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/music/poster-small.jpeg",
-    lyric: "[00:00.00] 暂无歌词\n[00:00.00] \n",
+      "https://y.qq.com/music/photo_new/T002R300x300M000003MlPxI0gqWpU_1.jpg?max_age=2592000",
+    lyric: lrcXjn,
     songName: "想见你想见你想见你",
     singer: "Keen",
     album: "想见你"
