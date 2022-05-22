@@ -9,11 +9,23 @@ import xiangjianni from '~/assets/music/xiangjianni.mp3'
 import cryfz from '~/assets/music/cryfz.mp3'
 // @ts-ignore
 import hxazgsj from '~/assets/music/hxazgsj.mp3'
+// @ts-ignore
+import yiluxiangbei from '~/assets/music/yiluxiangbei.mp3'
 import lrcWenfeng from '~/assets/music/wenfeng'
 import lrcXjn from '~/assets/music/xiangjianni'
 import lrcHxazgsj from '~/assets/music/hxazgsj'
+import lrcYiLuXiangBei from '~/assets/music/yiluxiangbei'
 const musicList = [
+
   {
+    src: yiluxiangbei,
+    poster:
+      "https://y.qq.com/music/photo_new/T002R300x300M000002MAeob3zLXwZ_2.jpg?max_age=2592000",
+    lyric: lrcYiLuXiangBei,
+    songName: "一路向北",
+    singer: "Keen",
+    album: "J III MP3 Player"
+  }, {
     src: hxazgsj,
     poster:
       "https://y.qq.com/music/photo_new/T002R300x300M000000QS9AZ18Dbnb_1.jpg?max_age=2592000",
