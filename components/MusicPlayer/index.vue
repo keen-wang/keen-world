@@ -88,13 +88,13 @@ export default Vue.extend({
       });
       const { player } = this;
       player.crossOrigin = "anonymous";
-      // let nullText = 0;
-      // player.on("lyricUpdate", (res: any) => {
-      //   console.log("lyricUpdate", res);
-      //   if (res.lyric === "\n") {
-      //     nullText++;
-      //   }
-      // });
+      let nullText = 0;
+      player.on("lyricUpdate", (res: any) => {
+        console.log("lyricUpdate", res);
+        if (res.lyric === "\n") {
+          // nullText++;
+        }
+      });
       if (this.activeMusic.lyric) {
         player.lyric(this.activeMusic.lyric, this.$refs.lyricBox);
         player.__lyric__.show();
@@ -110,11 +110,15 @@ export default Vue.extend({
         if (!lyricBox) {
           throw Error("lyric box not found!");
         }
-        player.off("lyricUpdate", player.__lyric__.__updateHandle__);
         while (lyricBox.firstChild) {
           lyricBox?.removeChild(lyricBox.firstChild);
         }
         if (this.activeMusic.lyric) {
+          debugger;
+          player.off("lyricUpdate", player.__lyric__.__updateHandle__);
+          player.off("lyricUpdate", player.__lyric__.__handle__);
+          player.__lyric__.__updateHandle__ = () => {};
+          player.__lyric__.__handle__ = () => {};
           player.lyric(this.activeMusic.lyric, lyricBox);
           player.__lyric__.show();
         }
@@ -286,7 +290,7 @@ export default Vue.extend({
     }
   }
 }
-@media screen and (max-width: 1000px) {
+@media screen and (max-width: 500px) {
   .player-wrap {
     width: 100%;
     height: auto;
