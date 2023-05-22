@@ -20,7 +20,6 @@ export class ZegoPitchView {
   ESTIMATED_CALL_INTERVAL_OFFSET = this.ESTIMATED_CALL_INTERVAL / 2;
 
   TRIANGLE_ANIM_TIME = this.ESTIMATED_CALL_INTERVAL; // 三角形动画的时间
-
   /**
    * 分数动画的几个时间段
    */
@@ -54,9 +53,10 @@ export class ZegoPitchView {
   // 界面图形相关参数
   mUnitWidth = 0; //单位毫秒时间长度
   mRectHeight = 0; //音高线的高度
-  mMidX = 0; //当前高音值三角形的x坐标
-
-  mMidY = 0; //当前高音值三角形的y坐标
+  /**当前高音值三角形的x坐标 */
+  mMidX = 0;
+  /**当前高音值三角形的y坐标 */
+  mMidY = 0;
   mMusicPitchList: ZegoPitch[] = []; //全部音高数据
   mHitRectList: ZegoPitch[] = []; //击中音高数据
   mCurrentMusicPitch = 0; //当前音高值，用于绘制三角指针的高度位置
@@ -76,11 +76,16 @@ export class ZegoPitchView {
   mScoreOffsetX = 0;
   mAnimHeight = 0;
 
-  scoreList: any = [];
+  scoreList: {
+    startTime: number;
+    top: number;
+    score: number;
+  }[] = [];
   svg: SVGSVGElement;
   svgBg: SVGGElement;
   svgRect: SVGGElement;
   svgHitRect: SVGGElement;
+  svgPoint: SVGGElement;
   container: HTMLElement | null = null
   /**
    * UI config
@@ -91,7 +96,7 @@ export class ZegoPitchView {
     verticalLineColor: "#FFA87BF1", //竖线颜色
     standardPitchColor: "#FF5D3B94", //默认音高线颜色
     hitPitchColor: "#FF3751", // 击中音高线颜色
-    pitchIndicatorColor: "#FFFFFF", // 音调指示器颜色
+    pitchIndicatorColor: "#000", // 音调指示器颜色
     scoreTextColor: "#fff" //分数文本颜色
   };
 
@@ -110,6 +115,9 @@ export class ZegoPitchView {
 
     const svgHitRect = this.svgHitRect = document.createElementNS(SVG_URI, 'g');
     svg.appendChild(svgHitRect);
+
+    const svgPoint = this.svgPoint = document.createElementNS(SVG_URI, 'g');
+    svg.appendChild(svgPoint);
   }
 
   mount(
@@ -196,34 +204,11 @@ export class ZegoPitchView {
       this.mCurrentMusicPitch = pitch;
     }
 
+    // 当前高音值三角形的y坐标
+    this.mMidY = this.getPitchTop(this.mCurrentMusicPitch) + this.mRectHeight / 2.0;
 
-    // const currentValue = this.mMidY;
-    // const lastTime = this.mStartTime;
-    // const nextValue = this.getPitchTop(this.mCurrentMusicPitch) + this.mRectHeight / 2.0;
-    // // 三角形滚动  const valueAnimator = ValueAnimator.ofFloat(0, 1);
-    // valueAnimator.setDuration(TRIANGLE_ANIM_TIME);
-    // valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-    //   onAnimationUpdate(animation: ValueAnimator) {
-    //     this.mMidY = currentValue + (nextValue - currentValue) * animation.getAnimatedFraction();
-    //     this.mStartTime = lastTime + (ESTIMATED_CALL_INTERVAL * animation.getAnimatedFraction());
-    //     this.invalidateView();
-    //   }
-    // });
-    // valueAnimator.addListener(new AnimatorListenerAdapter() {
-    //   onAnimationEnd(animation: Animator) {
-    //     this.mMidY = nextValue;
-    //     this.mStartTime = lastTime + ESTIMATED_CALL_INTERVAL;
-    //   }
-    //   onAnimationCancel(animation: Animator) {
-    //     this.mMidY = nextValue;
-    //     this.mStartTime = lastTime + ESTIMATED_CALL_INTERVAL;
-    //   }
-    // });
-    // valueAnimator.start();
     // 触发绘制
-    this.drawRect()
-    this.drawHitRect()
-    this.drawPitchPoint()
+    this.dispatchDraw()
   }
 
 
@@ -389,14 +374,13 @@ export class ZegoPitchView {
     this.drawBackground()
   }
 
-  // private dispatchDraw(): void {
-  //   this.drawBackground();
-  //   //绘制标准音高线
-  //   this.drawRect();
-  //   //绘制击中音高线和其他效果
-  //   this.drawHitRect();
-  //   this.drawPitchPoint(); //绘制三角形
-  // }
+  private dispatchDraw(): void {
+    //绘制标准音高线
+    this.drawRect();
+    //绘制击中音高线和其他效果
+    this.drawHitRect();
+    this.drawPitchPoint(); //绘制三角形
+  }
 
   private drawBackground(): void {
     if (!this.svg || !this.svgBg) return;
@@ -435,13 +419,6 @@ export class ZegoPitchView {
 
     }
 
-    // canvas.drawLine(
-    //   mMidX,
-    //   paddingBottom,
-    //   mMidX + mTimeLineWidth,
-    //   clientHeight - paddingBottom,
-    // );
-
     //   mVerticalLinePaint
     const line = document.createElementNS(SVG_URI, 'line');
     line.setAttribute('x1', mMidX + '');
@@ -452,6 +429,8 @@ export class ZegoPitchView {
     line.setAttribute('stroke-width', '2');
     line.setAttribute('class', `zg-veritical-line`);
     this.svgBg.appendChild(line)
+
+    this.drawPitchPoint()
   }
 
   private drawRect(): void {
@@ -466,7 +445,6 @@ export class ZegoPitchView {
     if (!mMusicPitchList.length || !this.svgRect) {
       return;
     }
-    // this.svgRect.innerHTML = ""
     // 音高线实际上就是一个个rect，计算出left, top, right, bottom执行drawRect绘制
     const startIndex = this.getCurrentMusicIndex(mMusicPitchList, mStartTime);
     let endIndex = this.getCurrentMusicIndex(
@@ -494,18 +472,6 @@ export class ZegoPitchView {
       // 音高线粗细
       // const bottom = top + mRectHeight;
       if (right >= left) {
-        // 用自定义的画笔绘制
-        // canvas.drawRoundRect(
-        //   left,
-        //   top,
-        //   right,
-        //   bottom,
-        //   mRectHeight / 2.0,
-        //   mRectHeight / 2.0,
-        //   mStandardPitchPaint
-        // );
-        // canvas.drawRect(left, top, right, bottom, mMusicPitchPaint);
-        // 
         let rect = document.querySelector(`#${this.id} g .zg-rect-${Math.round(musicPitch.begin_time)}`) as SVGRectElement
         if (!rect) {
           rect = document.createElementNS(SVG_URI, 'rect');
@@ -632,19 +598,6 @@ export class ZegoPitchView {
       endIndex = size - 1;
     }
     return pitchList.slice(statIndex, endIndex + 1).map(item => ({ ...item }));
-    // for (let i = statIndex; i < size && i <= endIndex; i++) {
-    //   const pitch = pitchList[i];
-
-    //   if (pitch == null) {
-    //     continue;
-    //   }
-
-    //   temp.push({
-    //     ...pitch
-    //   });
-    // }
-
-    // return temp;
   }
 
   private getCurrentMusicIndex(pitchList: ZegoPitch[], time: number): number {
@@ -668,33 +621,63 @@ export class ZegoPitchView {
       mMidX,
       mMidY,
       ANIM_TOTAL_TIME,
-      mScoreOffsetX
+      mScoreOffsetX,
+      mScoreOffsetY
     } = this;
-    // const path = new Path();
-    // path.moveTo(mMidX - TRIANGLE_WIDTH, mMidY - TRIANGLE_HEIGHT / 2);
-    // path.lineTo(mMidX, mMidY);
-    // path.lineTo(mMidX - TRIANGLE_WIDTH, mMidY + TRIANGLE_HEIGHT / 2);
-    // path.close();
-    // canvas.drawPath(path, mTrianglePaint);
+
+    const pathStr = `M ${mMidX - TRIANGLE_WIDTH},${0 - TRIANGLE_HEIGHT / 2} L ${mMidX},${0} L ${mMidX - TRIANGLE_WIDTH},${0 + TRIANGLE_HEIGHT / 2} Z`
+
+    let point = document.querySelector(`#${this.id} g .zg-pitch-point`) as SVGPathElement
+    if (!point) {
+      const point = document.createElementNS(SVG_URI, "path");
+      point.setAttribute("d", pathStr);
+      point.setAttribute("fill", this.config.pitchIndicatorColor);
+      point.setAttribute("stroke", this.config.pitchIndicatorColor);
+      point.setAttribute("stroke-width", "2");
+      point.setAttribute("class", "zg-pitch-point");
+      point.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
+      this.svgPoint.appendChild(point);
+      point.setAttribute('transform', `translate(0, ${mMidY})`);
+    } else {
+      point.setAttribute('transform', `translate(0, ${mMidY})`);
+    }
 
     const time = Date.now();
-    [...this.scoreList].forEach(item => {
-      const score = item;
-      if (time - score.getStartTime() > ANIM_TOTAL_TIME) {
-        const curIndex = this.scoreList.indexOf(item);
+    [...this.scoreList].forEach(score => {
+      let svgScore = document.querySelector(`#${this.id} g .zg-score-text`) as SVGTextElement
+      if (time - score.startTime > ANIM_TOTAL_TIME) {
+        const curIndex = this.scoreList.indexOf(score);
         this.scoreList.splice(curIndex, 1);
+        if (svgScore) {
+          svgScore.setAttribute('opacity', '0');
+        }
       } else {
-        // mScorePaint.setAlpha(getAlpha(time - score.getStartTime()));
-        // const text = "+" + score.getScore();
-        // const textWidth = mScorePaint.measureText(text);
-        // const lineBound = new Rect();
-        // mScorePaint.getTextBounds(text, 0, text.length(), lineBound);
-        // const textHeight = lineBound.height();
-        // if (mScoreOffsetX < 0) {
-        //   canvas.drawText(text, mMidX + mScoreOffsetX - textWidth, getTop(score.getTop() + mScoreOffsetY + textHeight / 2, time - score.getStartTime())), mScorePaint);
-        // } else {
-        //   canvas.drawText(text, mMidX + mScoreOffsetX, getTop(score.getTop() + mScoreOffsetY + textHeight / 2, time - score.getStartTime()), mScorePaint);
-        // }
+        const text = "+" + score.score;
+        const opacity = this.getOpacity(time - score.startTime) + ""
+        // console.warn('drawScore', score.score, opacity)
+
+        if (!svgScore) {
+          svgScore = document.createElementNS(SVG_URI, "text");
+          svgScore.setAttribute('font-size', '24');
+          svgScore.setAttribute('fill', this.config.scoreTextColor);
+          svgScore.setAttribute("class", "zg-score-text");
+          this.svgPoint.appendChild(svgScore)
+        }
+        svgScore.setAttribute('opacity', opacity);
+        svgScore.textContent = text;
+        const bbox = svgScore.getBBox();
+        const textHeight = bbox.height;
+        const textWidth = bbox.width;
+        const top = score.top + mScoreOffsetY + textHeight / 2
+        // TODO: 上升动画进度为匀速，非自然运动
+        const animProcess = (time - score.startTime) / 200
+        if (mScoreOffsetX < 0) {
+          svgScore.setAttribute('x', mMidX + mScoreOffsetX - textWidth + 4 + "");
+          svgScore.setAttribute('y', top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + "");
+        } else {
+          svgScore.setAttribute('x', mMidX + mScoreOffsetX + 4 + "");
+          svgScore.setAttribute('y', top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + "");
+        }
       }
     });
   }
@@ -773,5 +756,17 @@ export class ZegoPitchView {
     return -1;
   }
 
-  // render() {}
+  getOpacity(time: number): number {
+    const { ANIM_TOTAL_TIME, ANIM_START_TIME, ANIM_END_TIME } = this
+    const startEndTime = (ANIM_TOTAL_TIME - ANIM_END_TIME)
+    let percent = 0
+    if (time > startEndTime) {
+      percent = Math.round((1 - (time - startEndTime) / (ANIM_END_TIME)) * 100);
+    } else if (time > ANIM_START_TIME) {
+      percent = 100;
+    } else {
+      percent = Math.round(time / ANIM_START_TIME * 100)
+    }
+    return percent / 100
+  }
 }

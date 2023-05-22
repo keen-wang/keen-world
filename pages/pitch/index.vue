@@ -43,6 +43,9 @@ export default Vue.extend({
         this.pitchView.setCurrentSongProgress(player.currentTime * 1000, 3);
       }
     }, 60);
+    setInterval(() => {
+      this.pitchView!.addScore(Math.round(Math.random() * 100));
+    }, 3 * 1e3);
   }
 });
 </script>
@@ -50,7 +53,7 @@ export default Vue.extend({
 #pitchContainer {
   width: 800px;
   height: 240px;
-  background-color: #e5fee2;
+  background-color: #7886ce;
   padding: 10px;
 }
 </style>
