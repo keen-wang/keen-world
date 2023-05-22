@@ -133,7 +133,9 @@ export class ZegoPitchView {
    * 传入音高线数组
    */
   public setStandardPitch(pitchList: ZegoPitch[]): void {
-    this.mMusicPitchList = [...pitchList];
+    this.mMusicPitchList = [...pitchList]
+      .filter(item => (item.pitch_value >= 0));
+    // 过滤掉 pitch_value 为 -1 的行标记
   }
 
   /**
@@ -143,49 +145,87 @@ export class ZegoPitchView {
    * @param pitch 实时音高
    */
   public setCurrentSongProgress(progress: number, pitch: number): void {
-    // console.warn("setCurrentSongProgress", progress, pitch)
-    this.mStartTime = progress - this.TIME_ELAPSED_ON_SCREEN;
+    const { ESTIMATED_CALL_INTERVAL, ESTIMATED_CALL_INTERVAL_OFFSET, TIME_ELAPSED_ON_SCREEN } = this
+    this.mStartTime = progress - TIME_ELAPSED_ON_SCREEN;
     this.mCurrentSongTime = progress;
     this.mCurrentMusicPitch = pitch;
+    // 根据当前时间找到对应的音高线数据
     const indexList = this.getCurrentMusicList(this.mMusicPitchList, this.mCurrentSongTime - this.ESTIMATED_CALL_INTERVAL - this.ESTIMATED_CALL_INTERVAL_OFFSET, this.ESTIMATED_CALL_INTERVAL + this.ESTIMATED_CALL_INTERVAL_OFFSET);
     let offsetPitch = -1;
-    const currentMusicIndex = indexList.find(item => (item > 0))
+    const currentMusicIndex = indexList.find(item => (item >= 0))
+
+
     if (currentMusicIndex !== undefined && currentMusicIndex >= 0) {
-      //能够找到索引,有音高对应的情况
+      // 能够找到索引，有音高对应的情况
       offsetPitch = this.getOffsetPitch(pitch);
       if (offsetPitch === -1) {
-        this.mCurrentMusicPitch = 0; //无声情况
+        this.mCurrentMusicPitch = 0; // 无声情况
       } else {
         const musicPitch = this.mMusicPitchList[currentMusicIndex];
-        if (musicPitch) {
+        // 根据偏差计算出实际音高值
+        if (musicPitch !== undefined) {
           this.mCurrentMusicPitch = musicPitch.pitch_value + offsetPitch * 4;
+          // 如果offsetPitch是0，那么当前的音高块是被击中了
           if (offsetPitch === 0) {
+            // 击中块的开始时间不能提前当前musicPitch的开始时间，不能越界
             const hitStartTime = Math.max(
               musicPitch.begin_time,
-              this.mCurrentSongTime -
-              this.ESTIMATED_CALL_INTERVAL -
-              this.ESTIMATED_CALL_INTERVAL_OFFSET
+              this.mCurrentSongTime
+              - ESTIMATED_CALL_INTERVAL
+              - ESTIMATED_CALL_INTERVAL_OFFSET
             );
+            // 击中块的开始时间不能提前当前musicPitch的结束时间，不能越界
             const hitEndTime = Math.min(
               musicPitch.begin_time + musicPitch.duration,
               this.mCurrentSongTime
             );
-            if (hitEndTime - hitStartTime !== 0) {
-              this.mHitRectList.push({
+
+            if (hitEndTime - hitStartTime !== 0 && musicPitch.pitch_value !== -1) {
+              this.addHitRectList({
                 duration: hitEndTime - hitStartTime,
                 pitch_value: musicPitch.pitch_value,
-                begin_time: hitStartTime
+                begin_time: Math.round(hitStartTime)
               });
             }
           }
         }
       }
     } else {
+      // 找不到匹配的标准音高
+      // 这种情况下，pitchOrPitchHit应该是实际音高值
       this.mCurrentMusicPitch = pitch;
     }
+
+
+    // const currentValue = this.mMidY;
+    // const lastTime = this.mStartTime;
+    // const nextValue = this.getPitchTop(this.mCurrentMusicPitch) + this.mRectHeight / 2.0;
+    // // 三角形滚动  const valueAnimator = ValueAnimator.ofFloat(0, 1);
+    // valueAnimator.setDuration(TRIANGLE_ANIM_TIME);
+    // valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    //   onAnimationUpdate(animation: ValueAnimator) {
+    //     this.mMidY = currentValue + (nextValue - currentValue) * animation.getAnimatedFraction();
+    //     this.mStartTime = lastTime + (ESTIMATED_CALL_INTERVAL * animation.getAnimatedFraction());
+    //     this.invalidateView();
+    //   }
+    // });
+    // valueAnimator.addListener(new AnimatorListenerAdapter() {
+    //   onAnimationEnd(animation: Animator) {
+    //     this.mMidY = nextValue;
+    //     this.mStartTime = lastTime + ESTIMATED_CALL_INTERVAL;
+    //   }
+    //   onAnimationCancel(animation: Animator) {
+    //     this.mMidY = nextValue;
+    //     this.mStartTime = lastTime + ESTIMATED_CALL_INTERVAL;
+    //   }
+    // });
+    // valueAnimator.start();
+    // 触发绘制
     this.drawRect()
     this.drawHitRect()
+    this.drawPitchPoint()
   }
+
 
   /**
    * 设置高潮片段 当前播放时间和音阶，两个参数必须同时设置，保证数据同步性(仅用于高潮片段资源)
@@ -451,9 +491,6 @@ export class ZegoPitchView {
       const width = musicPitch.duration * mUnitWidth;
       // 根据音高值确定top，先算出当前应该在第几个音阶，再乘以每阶高度
       const top = this.getPitchTop(musicPitch.pitch_value);
-      // if (top > 200) {
-      //   debugger
-      // }
       // 音高线粗细
       // const bottom = top + mRectHeight;
       if (right >= left) {
@@ -530,8 +567,8 @@ export class ZegoPitchView {
       endIndex = mHitRectList.length - 1;
     }
 
-    const showingPitchList = this.cutMusicPitch(mHitRectList, startIndex, endIndex + 1);
-    console.warn("showingPitchList", showingPitchList)
+    const showingPitchList = this.cutMusicPitch(mHitRectList, startIndex, endIndex + 1).filter(item => (item.pitch_value >= 0));
+    // console.warn("showingPitchList", JSON.stringify(showingPitchList))
     const showingRectElements: SVGRectElement[] = []
     for (const musicPitch of showingPitchList) {
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
@@ -542,13 +579,13 @@ export class ZegoPitchView {
       // 音高线粗细
       // const bottom = top + mRectHeight;
       if (right >= left) {
-        let rect = document.querySelector(`#${this.id} g .zg-hit-rect-${Math.floor(musicPitch.begin_time)}`) as SVGRectElement
+        let rect = document.querySelector(`#${this.id} g .zg-hit-rect-${Math.round(musicPitch.begin_time)}`) as SVGRectElement
         if (!rect) {
           rect = document.createElementNS(SVG_URI, 'rect');
           rect.setAttribute('fill', this.config.hitPitchColor);
           rect.setAttribute('stroke', this.config.hitPitchColor);
           // rect.setAttribute('stroke-width', '2');
-          rect.setAttribute('class', `zg-hit-rect zg-hit-rect-${Math.floor(musicPitch.begin_time)}`);
+          rect.setAttribute('class', `zg-hit-rect zg-hit-rect-${Math.round(musicPitch.begin_time)}`);
           rect.setAttribute('width', width + '');
           rect.setAttribute('height', mRectHeight + '');
           rect.setAttribute('rx', mRectHeight / 2 + '');
@@ -558,6 +595,7 @@ export class ZegoPitchView {
           rect.setAttribute('y', top + '');
         } else {
           rect.setAttribute('x', left + '');
+          rect.setAttribute('width', width + ''); // 高亮音高线长度会变化
         }
 
         this.svgHitRect.append(rect)
@@ -680,6 +718,59 @@ export class ZegoPitchView {
     }
 
     return currentMusicList;
+  }
+
+  private addHitRectList(pitch: ZegoPitch): void {
+    if (pitch === null) {
+      return;
+    }
+
+    if (this.mHitRectList.length === 0) {
+      this.mHitRectList.push(pitch);
+      return;
+    }
+
+    let position = this.binarySearch(this.mHitRectList, pitch.begin_time);
+    // console.log("addHitRectList binarySearch", position, pitch.begin_time)
+    if (position === -1) {
+      const endPitch = this.mHitRectList[this.mHitRectList.length - 1];
+      if (endPitch.begin_time + endPitch.duration + 1 < pitch.begin_time) {
+        this.mHitRectList.push(pitch);
+      } else {
+        // debugger
+        const size = this.mHitRectList.length;
+        for (let i = 0; i < size - 1; i++) {
+          if (this.mHitRectList[i].begin_time > pitch.begin_time) {
+            this.mHitRectList.splice(i, 0, pitch);
+            break;
+          }
+        }
+      }
+    } else {
+      const positionPitch = this.mHitRectList[position];
+      if (positionPitch.pitch_value === pitch.pitch_value) {
+        positionPitch.duration = pitch.begin_time + pitch.duration - positionPitch.begin_time;
+      } else {
+        this.mHitRectList.splice(position + 1, 0, pitch);
+      }
+    }
+    // console.warn(`addHitRectList`, JSON.stringify(this.mHitRectList))
+  }
+  binarySearch(pitchList: ZegoPitch[], key: number): number {
+    let low = 0;
+    let high = pitchList.length - 1;
+    while (low <= high) {
+      const mid = Math.floor((high + low) / 2);
+      const temp = pitchList[mid];
+      if (key > temp.begin_time + temp.duration + 1) {
+        low = mid + 1;
+      } else if (key < temp.begin_time) {
+        high = mid - 1;
+      } else {
+        return mid;
+      }
+    }
+    return -1;
   }
 
   // render() {}

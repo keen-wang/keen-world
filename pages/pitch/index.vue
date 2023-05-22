@@ -40,9 +40,9 @@ export default Vue.extend({
     };
     setInterval(() => {
       if (!player.paused && this.pitchView) {
-        this.pitchView.setCurrentSongProgress(player.currentTime * 1000, 0);
+        this.pitchView.setCurrentSongProgress(player.currentTime * 1000, 3);
       }
-    }, 100);
+    }, 60);
   }
 });
 </script>
@@ -50,7 +50,7 @@ export default Vue.extend({
 #pitchContainer {
   width: 800px;
   height: 240px;
-  background-color: #dfdfdf;
+  background-color: #e5fee2;
   padding: 10px;
 }
 </style>
