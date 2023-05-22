@@ -4,16 +4,20 @@ interface ZegoPitch {
   pitch_value: number;
 }
 const SVG_URI = 'http://www.w3.org/2000/svg'
+
+
 export class ZegoPitchView {
+  id: string
   MAX_BACKGROUND_LINE_NUM = 5; // 最大背景线数量
   MUSIC_PITCH_NUM = 20; // 音阶数，可自行定义
   MUSIC_MAX_PITCH = 90; // 最大音高值,不可更改
   MUSIC_MIN_PITCH = 10; // 最小音高值，不可更改
   TIME_ELAPSED_ON_SCREEN = 1150; // 屏幕中已经唱过的时间（控件开始至竖线这一段表示的时间），可自行定义
   TIME_TO_PLAY_ON_SCREEN = 2750; // 屏幕中还未唱的时间（竖线至控件末尾这一段表示的时间），可自行定义
-
-  ESTIMATED_CALL_INTERVAL = 60; // 击中块时间间隔(调用 setCurrentSongProgress 方法的大致时间间隔)
-  ESTIMATED_CALL_INTERVAL_OFFSET = this.ESTIMATED_CALL_INTERVAL / 2; // 击中块时间间隔偏移
+  /** 击中块时间间隔(调用 setCurrentSongProgress 方法的大致时间间隔) */
+  ESTIMATED_CALL_INTERVAL = 60;
+  /** 击中块时间间隔偏移 */
+  ESTIMATED_CALL_INTERVAL_OFFSET = this.ESTIMATED_CALL_INTERVAL / 2;
 
   TRIANGLE_ANIM_TIME = this.ESTIMATED_CALL_INTERVAL; // 三角形动画的时间
 
@@ -90,27 +94,10 @@ export class ZegoPitchView {
     scoreTextColor: "#fff" //分数文本颜色
   };
 
-  //根据当前时间找到对应的音高线数据
-  get currentMusicIndex(): number {
-    const index = this.mMusicPitchList.findIndex((item, index) => {
-      const nextItem = this.mMusicPitchList[index + 1];
-      if (
-        this.mCurrentSongTime >= item.begin_time &&
-        this.mCurrentSongTime < item.begin_time
-      ) {
-        return true;
-      } else if (!nextItem) {
-        return true;
-      } else {
-        return false;
-      }
-    });
-    return isNaN(index) ? -1 : index;
-  }
-
   constructor() {
     const svg = this.svg = document.createElementNS(SVG_URI, 'svg');
-    svg.setAttribute('id', 'pitchView');
+    this.id = `zg-pitch-view-${Date.now()}`
+    svg.setAttribute('id', this.id);
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
 
@@ -152,20 +139,20 @@ export class ZegoPitchView {
    * @param pitch 实时音高
    */
   public setCurrentSongProgress(progress: number, pitch: number): void {
-    console.warn("setCurrentSongProgress", progress, pitch)
+    // console.warn("setCurrentSongProgress", progress, pitch)
     this.mStartTime = progress - this.TIME_ELAPSED_ON_SCREEN;
     this.mCurrentSongTime = progress;
     this.mCurrentMusicPitch = pitch;
-    // const indexList = this.getCurrentMusicList(this.mMusicPitchList, this.mCurrentSongTime - this.ESTIMATED_CALL_INTERVAL - this.ESTIMATED_CALL_INTERVAL_OFFSET, this.ESTIMATED_CALL_INTERVAL + this.ESTIMATED_CALL_INTERVAL_OFFSET);
+    const indexList = this.getCurrentMusicList(this.mMusicPitchList, this.mCurrentSongTime - this.ESTIMATED_CALL_INTERVAL - this.ESTIMATED_CALL_INTERVAL_OFFSET, this.ESTIMATED_CALL_INTERVAL + this.ESTIMATED_CALL_INTERVAL_OFFSET);
     let offsetPitch = -1;
-
-    if (this.currentMusicIndex >= 0) {
+    const currentMusicIndex = indexList.find(item => (item > 0))
+    if (currentMusicIndex !== undefined && currentMusicIndex >= 0) {
       //能够找到索引,有音高对应的情况
       offsetPitch = this.getOffsetPitch(pitch);
       if (offsetPitch === -1) {
         this.mCurrentMusicPitch = 0; //无声情况
       } else {
-        const musicPitch = this.mMusicPitchList[this.currentMusicIndex];
+        const musicPitch = this.mMusicPitchList[currentMusicIndex];
         if (musicPitch) {
           this.mCurrentMusicPitch = musicPitch.pitch_value + offsetPitch * 4;
           if (offsetPitch === 0) {
@@ -397,7 +384,7 @@ export class ZegoPitchView {
         paddingBottom + "");
       line.setAttribute('stroke', this.config.staffColor);
       line.setAttribute('stroke-width', '2');
-      line.setAttribute('class', `zg-bg_line-${i}`);
+      line.setAttribute('class', `zg-bg-line-${i}`);
       this.svgBg.appendChild(line)
 
     }
@@ -417,7 +404,7 @@ export class ZegoPitchView {
     line.setAttribute('y2', clientHeight - paddingBottom + "");
     line.setAttribute('stroke', this.config.verticalLineColor);
     line.setAttribute('stroke-width', '2');
-    line.setAttribute('class', `zg-veritical_line`);
+    line.setAttribute('class', `zg-veritical-line`);
     this.svgBg.appendChild(line)
   }
 
@@ -429,7 +416,6 @@ export class ZegoPitchView {
       TIME_TO_PLAY_ON_SCREEN,
       mUnitWidth,
       mRectHeight,
-
     } = this;
     if (!mMusicPitchList.length || !this.svgRect) {
       return;
@@ -450,7 +436,7 @@ export class ZegoPitchView {
       endIndex = mMusicPitchList.length - 1;
     }
 
-    const showingPitchList = this.cutMusicPitch(mMusicPitchList, startIndex, endIndex + 1);
+    const showingPitchList = this.cutMusicPitch(mMusicPitchList, startIndex, endIndex + 1).filter(item => (item.pitch_value >= 0));
     for (const musicPitch of showingPitchList) {
 
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
@@ -458,9 +444,9 @@ export class ZegoPitchView {
       const width = musicPitch.duration * mUnitWidth;
       // 根据音高值确定top，先算出当前应该在第几个音阶，再乘以每阶高度
       const top = this.getPitchTop(musicPitch.pitch_value);
-      if (top > 200) {
-        debugger
-      }
+      // if (top > 200) {
+      //   debugger
+      // }
       // 音高线粗细
       const bottom = top + mRectHeight;
       if (right >= left) {
@@ -586,7 +572,8 @@ export class ZegoPitchView {
 
     for (let i = 0; i < size; i++) {
       const pitch = pitchList[i];
-      if (time <= pitch.begin_time + pitch.duration) {
+      const picthEndTime = pitch.begin_time + pitch.duration
+      if (time <= picthEndTime && pitch.pitch_value !== -1) {
         return i;
       }
     }
@@ -630,6 +617,27 @@ export class ZegoPitchView {
         // }
       }
     });
+  }
+
+  getCurrentMusicList(pitchList: ZegoPitch[], startTime: number, duration: number): number[] {
+    const size = pitchList.length;
+    const currentMusicList: number[] = [];
+
+    for (let i = 0; i < size; i++) {
+      const pitch = pitchList[i];
+      const pitchStartTime = pitch.begin_time
+      const picthEndTime = (pitch.begin_time + pitch.duration)
+      if ((startTime + duration) < pitchStartTime) {
+        break;
+      }
+
+      // || (startTime + duration) <= picthEndTime
+      if (startTime <= picthEndTime) {
+        currentMusicList.push(i);
+      }
+    }
+
+    return currentMusicList;
   }
 
   // render() {}
