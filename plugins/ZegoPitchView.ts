@@ -80,17 +80,18 @@ export class ZegoPitchView {
   svg: SVGSVGElement;
   svgBg: SVGGElement;
   svgRect: SVGGElement;
+  svgHitRect: SVGGElement;
   container: HTMLElement | null = null
   /**
    * UI config
    *
    */
   config = {
+    staffColor: "#33FFFFFF", //五线谱横线颜色
+    verticalLineColor: "#FFA87BF1", //竖线颜色
     standardPitchColor: "#FF5D3B94", //默认音高线颜色
     hitPitchColor: "#FF3751", // 击中音高线颜色
     pitchIndicatorColor: "#FFFFFF", // 音调指示器颜色
-    staffColor: "#33FFFFFF", //五线谱横线颜色
-    verticalLineColor: "#FFA87BF1", //竖线颜色
     scoreTextColor: "#fff" //分数文本颜色
   };
 
@@ -106,6 +107,9 @@ export class ZegoPitchView {
 
     const svgRect = this.svgRect = document.createElementNS(SVG_URI, 'g');
     svg.appendChild(svgRect);
+
+    const svgHitRect = this.svgHitRect = document.createElementNS(SVG_URI, 'g');
+    svg.appendChild(svgHitRect);
   }
 
   mount(
@@ -180,6 +184,7 @@ export class ZegoPitchView {
       this.mCurrentMusicPitch = pitch;
     }
     this.drawRect()
+    this.drawHitRect()
   }
 
   /**
@@ -240,6 +245,7 @@ export class ZegoPitchView {
 
     return 0;
   }
+
   /**
    * 设置 ui
    * @param config
@@ -308,7 +314,7 @@ export class ZegoPitchView {
    * 计算布局
    * @returns 
    */
-  onLayout(): // changed: boolean,
+  private onLayout(): // changed: boolean,
     // left: number,
     // top: number,
     // right: number,
@@ -408,7 +414,7 @@ export class ZegoPitchView {
     this.svgBg.appendChild(line)
   }
 
-  drawRect(): void {
+  private drawRect(): void {
     const {
       mMusicPitchList,
       mStartTime,
@@ -420,7 +426,7 @@ export class ZegoPitchView {
     if (!mMusicPitchList.length || !this.svgRect) {
       return;
     }
-    this.svgRect.innerHTML = ""
+    // this.svgRect.innerHTML = ""
     // 音高线实际上就是一个个rect，计算出left, top, right, bottom执行drawRect绘制
     const startIndex = this.getCurrentMusicIndex(mMusicPitchList, mStartTime);
     let endIndex = this.getCurrentMusicIndex(
@@ -437,6 +443,7 @@ export class ZegoPitchView {
     }
 
     const showingPitchList = this.cutMusicPitch(mMusicPitchList, startIndex, endIndex + 1).filter(item => (item.pitch_value >= 0));
+    const showingRectElements: SVGRectElement[] = []
     for (const musicPitch of showingPitchList) {
 
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
@@ -448,7 +455,7 @@ export class ZegoPitchView {
       //   debugger
       // }
       // 音高线粗细
-      const bottom = top + mRectHeight;
+      // const bottom = top + mRectHeight;
       if (right >= left) {
         // 用自定义的画笔绘制
         // canvas.drawRoundRect(
@@ -462,23 +469,39 @@ export class ZegoPitchView {
         // );
         // canvas.drawRect(left, top, right, bottom, mMusicPitchPaint);
         // 
-        const rect = document.createElementNS(SVG_URI, 'rect');
-        rect.setAttribute('x', left + '');
-        rect.setAttribute('y', top + '');
-        rect.setAttribute('width', width + '');
-        rect.setAttribute('height', mRectHeight + '');
-        rect.setAttribute('rx', mRectHeight / 2 + '');
-        rect.setAttribute('ry', mRectHeight / 2 + '');
-        rect.setAttribute('fill', 'none');
-        rect.setAttribute('stroke', `#000`);
-        rect.setAttribute('stroke-width', '2');
-        rect.setAttribute('class', `zg-rect-${musicPitch.begin_time}`);
+        let rect = document.querySelector(`#${this.id} g .zg-rect-${Math.round(musicPitch.begin_time)}`) as SVGRectElement
+        if (!rect) {
+          rect = document.createElementNS(SVG_URI, 'rect');
+          rect.setAttribute('fill', this.config.standardPitchColor);
+          rect.setAttribute('stroke', this.config.standardPitchColor);
+          // rect.setAttribute('stroke-width', '2');
+          rect.setAttribute('class', `zg-rect zg-rect-${Math.round(musicPitch.begin_time)}`);
+          rect.setAttribute('width', width + '');
+          rect.setAttribute('height', mRectHeight + '');
+          rect.setAttribute('rx', mRectHeight / 2 + '');
+          rect.setAttribute('ry', mRectHeight / 2 + '');
+          // rect.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
+          rect.setAttribute('x', left + '');
+          rect.setAttribute('y', top + '');
+        } else {
+          rect.setAttribute('x', left + '');
+        }
+
         this.svgRect.append(rect)
+        showingRectElements.push(rect)
       }
     }
+
+    // 移除已经不展示的RECT元素
+    let existRectElements = Array.from(document.querySelectorAll(`#${this.id} g .zg-rect`)) as SVGRectElement[]
+    existRectElements.forEach((item) => {
+      if (!showingRectElements.includes(item)) {
+        this.svgRect.removeChild(item)
+      }
+    })
   }
 
-  drawHitRect(): void {
+  private drawHitRect(): void {
     //与drawRect逻辑类似，使用mHitRectList里的数据画出击中的音高线
     const {
       mHitRectList,
@@ -507,28 +530,47 @@ export class ZegoPitchView {
       endIndex = mHitRectList.length - 1;
     }
 
-    const data = this.cutMusicPitch(mHitRectList, startIndex, endIndex + 1);
-    for (const musicPitch of data) {
+    const showingPitchList = this.cutMusicPitch(mHitRectList, startIndex, endIndex + 1);
+    console.warn("showingPitchList", showingPitchList)
+    const showingRectElements: SVGRectElement[] = []
+    for (const musicPitch of showingPitchList) {
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
       const right = left + musicPitch.duration * mUnitWidth;
+      const width = musicPitch.duration * mUnitWidth;
       // 根据音高值确定top，先算出当前应该在第几个音阶，再乘以每阶高度
       const top = this.getPitchTop(musicPitch.pitch_value);
       // 音高线粗细
-      const bottom = top + mRectHeight;
+      // const bottom = top + mRectHeight;
       if (right >= left) {
-        // 用自定义的画笔绘制
-        // canvas.drawRoundRect(
-        //   left,
-        //   top,
-        //   right,
-        //   bottom,
-        //   mRectHeight / 2.0,
-        //   mRectHeight / 2.0,
-        //   mHitPitchPaint
-        // );
-        // canvas.drawRect(left, top, right, bottom, mHitPitchPaint);
+        let rect = document.querySelector(`#${this.id} g .zg-hit-rect-${Math.floor(musicPitch.begin_time)}`) as SVGRectElement
+        if (!rect) {
+          rect = document.createElementNS(SVG_URI, 'rect');
+          rect.setAttribute('fill', this.config.hitPitchColor);
+          rect.setAttribute('stroke', this.config.hitPitchColor);
+          // rect.setAttribute('stroke-width', '2');
+          rect.setAttribute('class', `zg-hit-rect zg-hit-rect-${Math.floor(musicPitch.begin_time)}`);
+          rect.setAttribute('width', width + '');
+          rect.setAttribute('height', mRectHeight + '');
+          rect.setAttribute('rx', mRectHeight / 2 + '');
+          rect.setAttribute('ry', mRectHeight / 2 + '');
+          // rect.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
+          rect.setAttribute('x', left + '');
+          rect.setAttribute('y', top + '');
+        } else {
+          rect.setAttribute('x', left + '');
+        }
+
+        this.svgHitRect.append(rect)
+        showingRectElements.push(rect)
       }
     }
+    // 移除已经不展示的RECT元素
+    let existRectElements = Array.from(document.querySelectorAll(`#${this.id} g .zg-hit-rect`)) as SVGRectElement[]
+    existRectElements.forEach((item) => {
+      if (!showingRectElements.includes(item)) {
+        this.svgHitRect.removeChild(item)
+      }
+    })
   }
 
   /**
@@ -538,7 +580,7 @@ export class ZegoPitchView {
    * @param endIndex
    * @returns
    */
-  cutMusicPitch(
+  private cutMusicPitch(
     pitchList: ZegoPitch[],
     statIndex: number,
     endIndex: number
@@ -567,7 +609,7 @@ export class ZegoPitchView {
     // return temp;
   }
 
-  getCurrentMusicIndex(pitchList: ZegoPitch[], time: number): number {
+  private getCurrentMusicIndex(pitchList: ZegoPitch[], time: number): number {
     const size = pitchList.length;
 
     for (let i = 0; i < size; i++) {
@@ -580,7 +622,7 @@ export class ZegoPitchView {
     return -1;
   }
 
-  drawPitchPoint() {
+  private drawPitchPoint() {
     // 画当前音高值，此处是用一个三角形图标表示当前高音值位置
     const {
       TRIANGLE_WIDTH,
@@ -619,7 +661,7 @@ export class ZegoPitchView {
     });
   }
 
-  getCurrentMusicList(pitchList: ZegoPitch[], startTime: number, duration: number): number[] {
+  private getCurrentMusicList(pitchList: ZegoPitch[], startTime: number, duration: number): number[] {
     const size = pitchList.length;
     const currentMusicList: number[] = [];
 
