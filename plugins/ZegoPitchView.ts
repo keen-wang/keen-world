@@ -3,11 +3,10 @@ interface ZegoPitch {
   duration: number;
   pitch_value: number;
 }
-const SVG_URI = 'http://www.w3.org/2000/svg'
-
+const SVG_URI = "http://www.w3.org/2000/svg";
 
 export class ZegoPitchView {
-  id: string
+  id: string;
   MAX_BACKGROUND_LINE_NUM = 5; // 最大背景线数量
   MUSIC_PITCH_NUM = 20; // 音阶数，可自行定义
   MUSIC_MAX_PITCH = 90; // 最大音高值,不可更改
@@ -39,7 +38,7 @@ export class ZegoPitchView {
   /**
    * 三角形音调指示器的大小
    */
-  TRIANGLE_WIDTH: number = 10;
+  TRIANGLE_WIDTH = 10;
   TRIANGLE_HEIGHT = 10;
 
   /**
@@ -86,7 +85,7 @@ export class ZegoPitchView {
   svgRect: SVGGElement;
   svgHitRect: SVGGElement;
   svgPoint: SVGGElement;
-  container: HTMLElement | null = null
+  container: HTMLElement | null = null;
   /**
    * UI config
    *
@@ -101,29 +100,29 @@ export class ZegoPitchView {
   };
 
   constructor() {
-    const svg = this.svg = document.createElementNS(SVG_URI, 'svg');
-    this.id = `zg-pitch-view-${Date.now()}`
-    svg.setAttribute('id', this.id);
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
+    const svg = (this.svg = document.createElementNS(SVG_URI, "svg"));
+    this.id = `zg-pitch-view-${Date.now()}`;
+    svg.setAttribute("id", this.id);
+    svg.setAttribute("width", "100%");
+    svg.setAttribute("height", "100%");
 
-    const bg = this.svgBg = document.createElementNS(SVG_URI, 'g');
+    const bg = (this.svgBg = document.createElementNS(SVG_URI, "g"));
     svg.appendChild(bg);
 
-    const svgRect = this.svgRect = document.createElementNS(SVG_URI, 'g');
+    const svgRect = (this.svgRect = document.createElementNS(SVG_URI, "g"));
     svg.appendChild(svgRect);
 
-    const svgHitRect = this.svgHitRect = document.createElementNS(SVG_URI, 'g');
+    const svgHitRect = (this.svgHitRect = document.createElementNS(
+      SVG_URI,
+      "g"
+    ));
     svg.appendChild(svgHitRect);
 
-    const svgPoint = this.svgPoint = document.createElementNS(SVG_URI, 'g');
+    const svgPoint = (this.svgPoint = document.createElementNS(SVG_URI, "g"));
     svg.appendChild(svgPoint);
   }
 
-  mount(
-    container: HTMLElement | string,
-    config?: any
-  ): void {
+  mount(container: HTMLElement | string, config?: any): void {
     if (typeof container === "string") {
       container = document.getElementById(container) as any;
     }
@@ -134,15 +133,14 @@ export class ZegoPitchView {
       throw "container not found";
     }
     // 计算布局
-    this.onLayout()
+    this.onLayout();
   }
 
   /**
    * 传入音高线数组
    */
   public setStandardPitch(pitchList: ZegoPitch[]): void {
-    this.mMusicPitchList = [...pitchList]
-      .filter(item => (item.pitch_value >= 0));
+    this.mMusicPitchList = [...pitchList].filter(item => item.pitch_value >= 0);
     // 过滤掉 pitch_value 为 -1 的行标记
   }
 
@@ -153,15 +151,24 @@ export class ZegoPitchView {
    * @param pitch 实时音高
    */
   public setCurrentSongProgress(progress: number, pitch: number): void {
-    const { ESTIMATED_CALL_INTERVAL, ESTIMATED_CALL_INTERVAL_OFFSET, TIME_ELAPSED_ON_SCREEN } = this
+    const {
+      ESTIMATED_CALL_INTERVAL,
+      ESTIMATED_CALL_INTERVAL_OFFSET,
+      TIME_ELAPSED_ON_SCREEN
+    } = this;
     this.mStartTime = progress - TIME_ELAPSED_ON_SCREEN;
     this.mCurrentSongTime = progress;
     this.mCurrentMusicPitch = pitch;
     // 根据当前时间找到对应的音高线数据
-    const indexList = this.getCurrentMusicList(this.mMusicPitchList, this.mCurrentSongTime - this.ESTIMATED_CALL_INTERVAL - this.ESTIMATED_CALL_INTERVAL_OFFSET, this.ESTIMATED_CALL_INTERVAL + this.ESTIMATED_CALL_INTERVAL_OFFSET);
+    const indexList = this.getCurrentMusicList(
+      this.mMusicPitchList,
+      this.mCurrentSongTime -
+      this.ESTIMATED_CALL_INTERVAL -
+      this.ESTIMATED_CALL_INTERVAL_OFFSET,
+      this.ESTIMATED_CALL_INTERVAL + this.ESTIMATED_CALL_INTERVAL_OFFSET
+    );
     let offsetPitch = -1;
-    const currentMusicIndex = indexList.find(item => (item >= 0))
-
+    const currentMusicIndex = indexList.find(item => item >= 0);
 
     if (currentMusicIndex !== undefined && currentMusicIndex >= 0) {
       // 能够找到索引，有音高对应的情况
@@ -178,9 +185,9 @@ export class ZegoPitchView {
             // 击中块的开始时间不能提前当前musicPitch的开始时间，不能越界
             const hitStartTime = Math.max(
               musicPitch.begin_time,
-              this.mCurrentSongTime
-              - ESTIMATED_CALL_INTERVAL
-              - ESTIMATED_CALL_INTERVAL_OFFSET
+              this.mCurrentSongTime -
+              ESTIMATED_CALL_INTERVAL -
+              ESTIMATED_CALL_INTERVAL_OFFSET
             );
             // 击中块的开始时间不能提前当前musicPitch的结束时间，不能越界
             const hitEndTime = Math.min(
@@ -188,7 +195,10 @@ export class ZegoPitchView {
               this.mCurrentSongTime
             );
 
-            if (hitEndTime - hitStartTime !== 0 && musicPitch.pitch_value !== -1) {
+            if (
+              hitEndTime - hitStartTime !== 0 &&
+              musicPitch.pitch_value !== -1
+            ) {
               this.addHitRectList({
                 duration: hitEndTime - hitStartTime,
                 pitch_value: musicPitch.pitch_value,
@@ -205,12 +215,12 @@ export class ZegoPitchView {
     }
 
     // 当前高音值三角形的y坐标
-    this.mMidY = this.getPitchTop(this.mCurrentMusicPitch) + this.mRectHeight / 2.0;
+    this.mMidY =
+      this.getPitchTop(this.mCurrentMusicPitch) + this.mRectHeight / 2.0;
 
     // 触发绘制
-    this.dispatchDraw()
+    this.dispatchDraw();
   }
-
 
   /**
    * 设置高潮片段 当前播放时间和音阶，两个参数必须同时设置，保证数据同步性(仅用于高潮片段资源)
@@ -337,7 +347,7 @@ export class ZegoPitchView {
   }
   /**
    * 计算布局
-   * @returns 
+   * @returns
    */
   private onLayout(): // changed: boolean,
     // left: number,
@@ -371,7 +381,7 @@ export class ZegoPitchView {
     const halfHeight = (clientHeight - paddingTop - paddingBottom) / 2.0;
     this.mAnimHeight = Math.min(this.mAnimHeight, halfHeight);
 
-    this.drawBackground()
+    this.drawBackground();
   }
 
   private dispatchDraw(): void {
@@ -388,11 +398,7 @@ export class ZegoPitchView {
     const num = this.MAX_BACKGROUND_LINE_NUM;
     const paddingTop = this.getViewStyle("paddingTop") || 0;
     const paddingBottom = this.getViewStyle("paddingBottom") || 0;
-    const {
-      mBackgroundLineHeight,
-      mMidX,
-      mTimeLineWidth,
-    } = this;
+    const { mBackgroundLineHeight, mMidX, mTimeLineWidth } = this;
     const lineSpacing =
       (clientHeight -
         paddingTop -
@@ -400,37 +406,43 @@ export class ZegoPitchView {
         num * mBackgroundLineHeight) /
       (num - 1.0);
     // 清空
-    this.svgBg.innerHTML = ""
+    this.svgBg.innerHTML = "";
 
     // 绘制五线谱
     for (let i = 0; i < num; i++) {
       //mStaffPaint
-      const line = document.createElementNS(SVG_URI, 'line');
-      line.setAttribute('x1', '0');
-      line.setAttribute('y1', (i * (mBackgroundLineHeight + lineSpacing) + paddingBottom) + "");
-      line.setAttribute('x2', clientWidth + '');
-      line.setAttribute('y2', i * (mBackgroundLineHeight + lineSpacing) +
+      const line = document.createElementNS(SVG_URI, "line");
+      line.setAttribute("x1", "0");
+      line.setAttribute(
+        "y1",
+        i * (mBackgroundLineHeight + lineSpacing) + paddingBottom + ""
+      );
+      line.setAttribute("x2", clientWidth + "");
+      line.setAttribute(
+        "y2",
+        i * (mBackgroundLineHeight + lineSpacing) +
         mBackgroundLineHeight +
-        paddingBottom + "");
-      line.setAttribute('stroke', this.config.staffColor);
-      line.setAttribute('stroke-width', '2');
-      line.setAttribute('class', `zg-bg-line-${i}`);
-      this.svgBg.appendChild(line)
-
+        paddingBottom +
+        ""
+      );
+      line.setAttribute("stroke", this.config.staffColor);
+      line.setAttribute("stroke-width", "2");
+      line.setAttribute("class", `zg-bg-line-${i}`);
+      this.svgBg.appendChild(line);
     }
 
     //   mVerticalLinePaint
-    const line = document.createElementNS(SVG_URI, 'line');
-    line.setAttribute('x1', mMidX + '');
-    line.setAttribute('y1', paddingBottom + "");
-    line.setAttribute('x2', mMidX + mTimeLineWidth + '');
-    line.setAttribute('y2', clientHeight - paddingBottom + "");
-    line.setAttribute('stroke', this.config.verticalLineColor);
-    line.setAttribute('stroke-width', '2');
-    line.setAttribute('class', `zg-veritical-line`);
-    this.svgBg.appendChild(line)
+    const line = document.createElementNS(SVG_URI, "line");
+    line.setAttribute("x1", mMidX + "");
+    line.setAttribute("y1", paddingBottom + "");
+    line.setAttribute("x2", mMidX + mTimeLineWidth + "");
+    line.setAttribute("y2", clientHeight - paddingBottom + "");
+    line.setAttribute("stroke", this.config.verticalLineColor);
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("class", `zg-veritical-line`);
+    this.svgBg.appendChild(line);
 
-    this.drawPitchPoint()
+    this.drawPitchPoint();
   }
 
   private drawRect(): void {
@@ -440,7 +452,7 @@ export class ZegoPitchView {
       TIME_ELAPSED_ON_SCREEN,
       TIME_TO_PLAY_ON_SCREEN,
       mUnitWidth,
-      mRectHeight,
+      mRectHeight
     } = this;
     if (!mMusicPitchList.length || !this.svgRect) {
       return;
@@ -460,10 +472,13 @@ export class ZegoPitchView {
       endIndex = mMusicPitchList.length - 1;
     }
 
-    const showingPitchList = this.cutMusicPitch(mMusicPitchList, startIndex, endIndex + 1).filter(item => (item.pitch_value >= 0));
-    const showingRectElements: SVGRectElement[] = []
+    const showingPitchList = this.cutMusicPitch(
+      mMusicPitchList,
+      startIndex,
+      endIndex + 1
+    ).filter(item => item.pitch_value >= 0);
+    const showingRectElements: SVGRectElement[] = [];
     for (const musicPitch of showingPitchList) {
-
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
       const right = left + musicPitch.duration * mUnitWidth;
       const width = musicPitch.duration * mUnitWidth;
@@ -472,36 +487,43 @@ export class ZegoPitchView {
       // 音高线粗细
       // const bottom = top + mRectHeight;
       if (right >= left) {
-        let rect = document.querySelector(`#${this.id} g .zg-rect-${Math.round(musicPitch.begin_time)}`) as SVGRectElement
+        let rect = document.querySelector(
+          `#${this.id} g .zg-rect-${Math.round(musicPitch.begin_time)}`
+        ) as SVGRectElement;
         if (!rect) {
-          rect = document.createElementNS(SVG_URI, 'rect');
-          rect.setAttribute('fill', this.config.standardPitchColor);
-          rect.setAttribute('stroke', this.config.standardPitchColor);
+          rect = document.createElementNS(SVG_URI, "rect");
+          rect.setAttribute("fill", this.config.standardPitchColor);
+          rect.setAttribute("stroke", this.config.standardPitchColor);
           // rect.setAttribute('stroke-width', '2');
-          rect.setAttribute('class', `zg-rect zg-rect-${Math.round(musicPitch.begin_time)}`);
-          rect.setAttribute('width', width + '');
-          rect.setAttribute('height', mRectHeight + '');
-          rect.setAttribute('rx', mRectHeight / 2 + '');
-          rect.setAttribute('ry', mRectHeight / 2 + '');
+          rect.setAttribute(
+            "class",
+            `zg-rect zg-rect-${Math.round(musicPitch.begin_time)}`
+          );
+          rect.setAttribute("width", width + "");
+          rect.setAttribute("height", mRectHeight + "");
+          rect.setAttribute("rx", mRectHeight / 2 + "");
+          rect.setAttribute("ry", mRectHeight / 2 + "");
           // rect.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
-          rect.setAttribute('x', left + '');
-          rect.setAttribute('y', top + '');
+          rect.setAttribute("x", left + "");
+          rect.setAttribute("y", top + "");
         } else {
-          rect.setAttribute('x', left + '');
+          rect.setAttribute("x", left + "");
         }
 
-        this.svgRect.append(rect)
-        showingRectElements.push(rect)
+        this.svgRect.append(rect);
+        showingRectElements.push(rect);
       }
     }
 
     // 移除已经不展示的RECT元素
-    let existRectElements = Array.from(document.querySelectorAll(`#${this.id} g .zg-rect`)) as SVGRectElement[]
-    existRectElements.forEach((item) => {
+    const existRectElements = Array.from(
+      document.querySelectorAll(`#${this.id} g .zg-rect`)
+    ) as SVGRectElement[];
+    existRectElements.forEach(item => {
       if (!showingRectElements.includes(item)) {
-        this.svgRect.removeChild(item)
+        this.svgRect.removeChild(item);
       }
-    })
+    });
   }
 
   private drawHitRect(): void {
@@ -512,8 +534,7 @@ export class ZegoPitchView {
       TIME_ELAPSED_ON_SCREEN,
       TIME_TO_PLAY_ON_SCREEN,
       mUnitWidth,
-      mRectHeight,
-
+      mRectHeight
     } = this;
     if (!mHitRectList.length) {
       return;
@@ -533,9 +554,13 @@ export class ZegoPitchView {
       endIndex = mHitRectList.length - 1;
     }
 
-    const showingPitchList = this.cutMusicPitch(mHitRectList, startIndex, endIndex + 1).filter(item => (item.pitch_value >= 0));
+    const showingPitchList = this.cutMusicPitch(
+      mHitRectList,
+      startIndex,
+      endIndex + 1
+    ).filter(item => item.pitch_value >= 0);
     // console.warn("showingPitchList", JSON.stringify(showingPitchList))
-    const showingRectElements: SVGRectElement[] = []
+    const showingRectElements: SVGRectElement[] = [];
     for (const musicPitch of showingPitchList) {
       const left = (musicPitch.begin_time - mStartTime) * mUnitWidth;
       const right = left + musicPitch.duration * mUnitWidth;
@@ -545,36 +570,43 @@ export class ZegoPitchView {
       // 音高线粗细
       // const bottom = top + mRectHeight;
       if (right >= left) {
-        let rect = document.querySelector(`#${this.id} g .zg-hit-rect-${Math.round(musicPitch.begin_time)}`) as SVGRectElement
+        let rect = document.querySelector(
+          `#${this.id} g .zg-hit-rect-${Math.round(musicPitch.begin_time)}`
+        ) as SVGRectElement;
         if (!rect) {
-          rect = document.createElementNS(SVG_URI, 'rect');
-          rect.setAttribute('fill', this.config.hitPitchColor);
-          rect.setAttribute('stroke', this.config.hitPitchColor);
+          rect = document.createElementNS(SVG_URI, "rect");
+          rect.setAttribute("fill", this.config.hitPitchColor);
+          rect.setAttribute("stroke", this.config.hitPitchColor);
           // rect.setAttribute('stroke-width', '2');
-          rect.setAttribute('class', `zg-hit-rect zg-hit-rect-${Math.round(musicPitch.begin_time)}`);
-          rect.setAttribute('width', width + '');
-          rect.setAttribute('height', mRectHeight + '');
-          rect.setAttribute('rx', mRectHeight / 2 + '');
-          rect.setAttribute('ry', mRectHeight / 2 + '');
+          rect.setAttribute(
+            "class",
+            `zg-hit-rect zg-hit-rect-${Math.round(musicPitch.begin_time)}`
+          );
+          rect.setAttribute("width", width + "");
+          rect.setAttribute("height", mRectHeight + "");
+          rect.setAttribute("rx", mRectHeight / 2 + "");
+          rect.setAttribute("ry", mRectHeight / 2 + "");
           // rect.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
-          rect.setAttribute('x', left + '');
-          rect.setAttribute('y', top + '');
+          rect.setAttribute("x", left + "");
+          rect.setAttribute("y", top + "");
         } else {
-          rect.setAttribute('x', left + '');
-          rect.setAttribute('width', width + ''); // 高亮音高线长度会变化
+          rect.setAttribute("x", left + "");
+          rect.setAttribute("width", width + ""); // 高亮音高线长度会变化
         }
 
-        this.svgHitRect.append(rect)
-        showingRectElements.push(rect)
+        this.svgHitRect.append(rect);
+        showingRectElements.push(rect);
       }
     }
     // 移除已经不展示的RECT元素
-    let existRectElements = Array.from(document.querySelectorAll(`#${this.id} g .zg-hit-rect`)) as SVGRectElement[]
-    existRectElements.forEach((item) => {
+    const existRectElements = Array.from(
+      document.querySelectorAll(`#${this.id} g .zg-hit-rect`)
+    ) as SVGRectElement[];
+    existRectElements.forEach(item => {
       if (!showingRectElements.includes(item)) {
-        this.svgHitRect.removeChild(item)
+        this.svgHitRect.removeChild(item);
       }
-    })
+    });
   }
 
   /**
@@ -605,7 +637,7 @@ export class ZegoPitchView {
 
     for (let i = 0; i < size; i++) {
       const pitch = pitchList[i];
-      const picthEndTime = pitch.begin_time + pitch.duration
+      const picthEndTime = pitch.begin_time + pitch.duration;
       if (time <= picthEndTime && pitch.pitch_value !== -1) {
         return i;
       }
@@ -625,9 +657,13 @@ export class ZegoPitchView {
       mScoreOffsetY
     } = this;
 
-    const pathStr = `M ${mMidX - TRIANGLE_WIDTH},${0 - TRIANGLE_HEIGHT / 2} L ${mMidX},${0} L ${mMidX - TRIANGLE_WIDTH},${0 + TRIANGLE_HEIGHT / 2} Z`
+    const pathStr = `M ${mMidX - TRIANGLE_WIDTH},${0 -
+      TRIANGLE_HEIGHT / 2} L ${mMidX},${0} L ${mMidX - TRIANGLE_WIDTH},${0 +
+      TRIANGLE_HEIGHT / 2} Z`;
 
-    let point = document.querySelector(`#${this.id} g .zg-pitch-point`) as SVGPathElement
+    const point = document.querySelector(
+      `#${this.id} g .zg-pitch-point`
+    ) as SVGPathElement;
     if (!point) {
       const point = document.createElementNS(SVG_URI, "path");
       point.setAttribute("d", pathStr);
@@ -635,62 +671,80 @@ export class ZegoPitchView {
       point.setAttribute("stroke", this.config.pitchIndicatorColor);
       point.setAttribute("stroke-width", "2");
       point.setAttribute("class", "zg-pitch-point");
-      point.setAttribute('style', `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`);
+      point.setAttribute(
+        "style",
+        `transition: transform ${this.ESTIMATED_CALL_INTERVAL / 1e3}s linear;`
+      );
       this.svgPoint.appendChild(point);
-      point.setAttribute('transform', `translate(0, ${mMidY})`);
+      point.setAttribute("transform", `translate(0, ${mMidY})`);
     } else {
-      point.setAttribute('transform', `translate(0, ${mMidY})`);
+      point.setAttribute("transform", `translate(0, ${mMidY})`);
     }
 
     const time = Date.now();
     [...this.scoreList].forEach(score => {
-      let svgScore = document.querySelector(`#${this.id} g .zg-score-text`) as SVGTextElement
+      let svgScore = document.querySelector(
+        `#${this.id} g .zg-score-text`
+      ) as SVGTextElement;
       if (time - score.startTime > ANIM_TOTAL_TIME) {
         const curIndex = this.scoreList.indexOf(score);
         this.scoreList.splice(curIndex, 1);
         if (svgScore) {
-          svgScore.setAttribute('opacity', '0');
+          svgScore.setAttribute("opacity", "0");
         }
       } else {
         const text = "+" + score.score;
-        const opacity = this.getOpacity(time - score.startTime) + ""
+        const opacity = this.getOpacity(time - score.startTime) + "";
         // console.warn('drawScore', score.score, opacity)
 
         if (!svgScore) {
           svgScore = document.createElementNS(SVG_URI, "text");
-          svgScore.setAttribute('font-size', '24');
-          svgScore.setAttribute('fill', this.config.scoreTextColor);
+          svgScore.setAttribute("font-size", "24");
+          svgScore.setAttribute("fill", this.config.scoreTextColor);
           svgScore.setAttribute("class", "zg-score-text");
-          this.svgPoint.appendChild(svgScore)
+          this.svgPoint.appendChild(svgScore);
         }
-        svgScore.setAttribute('opacity', opacity);
+        svgScore.setAttribute("opacity", opacity);
         svgScore.textContent = text;
         const bbox = svgScore.getBBox();
         const textHeight = bbox.height;
         const textWidth = bbox.width;
-        const top = score.top + mScoreOffsetY + textHeight / 2
+        const top = score.top + mScoreOffsetY + textHeight / 2;
         // TODO: 上升动画进度为匀速，非自然运动
-        const animProcess = (time - score.startTime) / 200
+        const animProcess = (time - score.startTime) / 200;
         if (mScoreOffsetX < 0) {
-          svgScore.setAttribute('x', mMidX + mScoreOffsetX - textWidth + 4 + "");
-          svgScore.setAttribute('y', top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + "");
+          svgScore.setAttribute(
+            "x",
+            mMidX + mScoreOffsetX - textWidth + 4 + ""
+          );
+          svgScore.setAttribute(
+            "y",
+            top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + ""
+          );
         } else {
-          svgScore.setAttribute('x', mMidX + mScoreOffsetX + 4 + "");
-          svgScore.setAttribute('y', top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + "");
+          svgScore.setAttribute("x", mMidX + mScoreOffsetX + 4 + "");
+          svgScore.setAttribute(
+            "y",
+            top + (mMidY - top) * (animProcess > 1 ? 1 : animProcess) + ""
+          );
         }
       }
     });
   }
 
-  private getCurrentMusicList(pitchList: ZegoPitch[], startTime: number, duration: number): number[] {
+  private getCurrentMusicList(
+    pitchList: ZegoPitch[],
+    startTime: number,
+    duration: number
+  ): number[] {
     const size = pitchList.length;
     const currentMusicList: number[] = [];
 
     for (let i = 0; i < size; i++) {
       const pitch = pitchList[i];
-      const pitchStartTime = pitch.begin_time
-      const picthEndTime = (pitch.begin_time + pitch.duration)
-      if ((startTime + duration) < pitchStartTime) {
+      const pitchStartTime = pitch.begin_time;
+      const picthEndTime = pitch.begin_time + pitch.duration;
+      if (startTime + duration < pitchStartTime) {
         break;
       }
 
@@ -713,7 +767,7 @@ export class ZegoPitchView {
       return;
     }
 
-    let position = this.binarySearch(this.mHitRectList, pitch.begin_time);
+    const position = this.binarySearch(this.mHitRectList, pitch.begin_time);
     // console.log("addHitRectList binarySearch", position, pitch.begin_time)
     if (position === -1) {
       const endPitch = this.mHitRectList[this.mHitRectList.length - 1];
@@ -732,7 +786,8 @@ export class ZegoPitchView {
     } else {
       const positionPitch = this.mHitRectList[position];
       if (positionPitch.pitch_value === pitch.pitch_value) {
-        positionPitch.duration = pitch.begin_time + pitch.duration - positionPitch.begin_time;
+        positionPitch.duration =
+          pitch.begin_time + pitch.duration - positionPitch.begin_time;
       } else {
         this.mHitRectList.splice(position + 1, 0, pitch);
       }
@@ -757,16 +812,16 @@ export class ZegoPitchView {
   }
 
   getOpacity(time: number): number {
-    const { ANIM_TOTAL_TIME, ANIM_START_TIME, ANIM_END_TIME } = this
-    const startEndTime = (ANIM_TOTAL_TIME - ANIM_END_TIME)
-    let percent = 0
+    const { ANIM_TOTAL_TIME, ANIM_START_TIME, ANIM_END_TIME } = this;
+    const startEndTime = ANIM_TOTAL_TIME - ANIM_END_TIME;
+    let percent = 0;
     if (time > startEndTime) {
-      percent = Math.round((1 - (time - startEndTime) / (ANIM_END_TIME)) * 100);
+      percent = Math.round((1 - (time - startEndTime) / ANIM_END_TIME) * 100);
     } else if (time > ANIM_START_TIME) {
       percent = 100;
     } else {
-      percent = Math.round(time / ANIM_START_TIME * 100)
+      percent = Math.round((time / ANIM_START_TIME) * 100);
     }
-    return percent / 100
+    return percent / 100;
   }
 }
