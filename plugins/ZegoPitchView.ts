@@ -3,6 +3,22 @@ interface ZegoPitch {
   duration: number;
   pitch_value: number;
 }
+
+interface ZegoPitchConfig {
+  /**五线谱横线颜色 */
+  staffColor: string;
+  /**竖线颜色 */
+  verticalLineColor: string;
+  /**默认音高线颜色 */
+  standardPitchColor: string;
+  /**击中音高线颜色 */
+  hitPitchColor: string;
+  /**音调指示器颜色 */
+  pitchIndicatorColor: string;
+  /**分数文本颜色 */
+  scoreTextColor: string;
+}
+
 const SVG_URI = "http://www.w3.org/2000/svg";
 
 export class ZegoPitchView {
@@ -61,15 +77,6 @@ export class ZegoPitchView {
   mCurrentMusicPitch = 0; //当前音高值，用于绘制三角指针的高度位置
   mCurrentSongTime = 0; //当前歌曲时间戳
 
-  // // TODO: 可能用不上 Paint 类型
-  // mStandardPitchPaint;
-  // mHitPitchPaint;
-  // mStaffPaint;
-  // mVerticalLinePaint;
-  // mTrianglePaint;
-  // mScorePaint;
-
-  // ？？？？
   // pathInterpolator = new PathInterpolator(0.5, 0.5, 0.5, 0.5);
   mScoreOffsetY = 0;
   mScoreOffsetX = 0;
@@ -122,7 +129,7 @@ export class ZegoPitchView {
     svg.appendChild(svgPoint);
   }
 
-  mount(container: HTMLElement | string, config?: any): void {
+  mount(container: HTMLElement | string, config?: ZegoPitchConfig): void {
     if (typeof container === "string") {
       container = document.getElementById(container) as any;
     }
@@ -132,6 +139,7 @@ export class ZegoPitchView {
     } else {
       throw "container not found";
     }
+    config && this.setUIConfig(config);
     // 计算布局
     this.onLayout();
   }
@@ -285,7 +293,7 @@ export class ZegoPitchView {
    * 设置 ui
    * @param config
    */
-  public setUIConfig(config: any): void {
+  public setUIConfig(config: ZegoPitchConfig): void {
     this.config = {
       ...this.config,
       ...config
@@ -645,7 +653,7 @@ export class ZegoPitchView {
     return -1;
   }
 
-  private drawPitchPoint() {
+  private drawPitchPoint(): void {
     // 画当前音高值，此处是用一个三角形图标表示当前高音值位置
     const {
       TRIANGLE_WIDTH,
